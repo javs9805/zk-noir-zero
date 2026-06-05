@@ -1,0 +1,148 @@
+[0m[1m[38;5;11mwarning[0m[1m: unused variable carry[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:33:17
+   [0m[34m│[0m
+[0m[34m33[0m [0m[34m│[0m         let mut carry: u128 = 0;
+   [0m[34m│[0m                 [0m[34m-----[0m [0m[34munused variable [0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;11mwarning[0m[1m: unused variable self[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:24:12
+   [0m[34m│[0m
+[0m[34m24[0m [0m[34m│[0m     fn mul(self, other: BigUint56) -> [Field; 14] {
+   [0m[34m│[0m            [0m[34m----[0m [0m[34munused variable [0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;11mwarning[0m[1m: unused variable other[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:24:18
+   [0m[34m│[0m
+[0m[34m24[0m [0m[34m│[0m     fn mul(self, other: BigUint56) -> [Field; 14] {
+   [0m[34m│[0m                  [0m[34m-----[0m [0m[34munused variable [0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: cannot find `total` in this scope [0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:36:21
+   [0m[34m│[0m
+[0m[34m36[0m [0m[34m│[0m             carry = total / limb_max;
+   [0m[34m│[0m                     [0m[34m-----[0m [0m[34mnot found in this scope[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Could not resolve 'acc' in path[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:35:31
+   [0m[34m│[0m
+[0m[34m35[0m [0m[34m│[0m             let total: u128 = acc[k] + carry;
+   [0m[34m│[0m                               [0m[34m---[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Unexpected mod, expected one of fn, internal, open[0m
+  [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:1:5
+  [0m[34m│[0m
+[0m[34m1[0m [0m[34m│[0m pub mod prime_field;
+  [0m[34m│[0m     [0m[34m---[0m
+  [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Unexpected =, expected one of bool, comptime, crate, dep, Field, fn, fmtstr, impl, str, &, (, [, integer type, Ident[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:25:28
+   [0m[34m│[0m
+[0m[34m25[0m [0m[34m│[0m         let limb_max: u128 = 72057594037927936; // 2^56
+   [0m[34m│[0m                            [0m[34m-[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Unexpected ;, expected one of bool, comptime, crate, dep, Field, fn, fmtstr, impl, str, &, (, [, integer type, Ident[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:26:27
+   [0m[34m│[0m
+[0m[34m26[0m [0m[34m│[0m         let mut acc: [u128; 14] = [0; 14];
+   [0m[34m│[0m                           [0m[34m-[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Expected a = but found [[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:26:22
+   [0m[34m│[0m
+[0m[34m26[0m [0m[34m│[0m         let mut acc: [u128; 14] = [0; 14];
+   [0m[34m│[0m                      [0m[34m-[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Expected an expression but found ;[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:26:27
+   [0m[34m│[0m
+[0m[34m26[0m [0m[34m│[0m         let mut acc: [u128; 14] = [0; 14];
+   [0m[34m│[0m                           [0m[34m-[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Expected an expression but found as[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:29:54
+   [0m[34m│[0m
+[0m[34m29[0m [0m[34m│[0m                 acc[i+j] = acc[i+j] + (self.limbs[i] as u128) * (other.limbs[j] as u128);
+   [0m[34m│[0m                                                      [0m[34m--------[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Expected an expression but found as[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:29:81
+   [0m[34m│[0m
+[0m[34m29[0m [0m[34m│[0m                 acc[i+j] = acc[i+j] + (self.limbs[i] as u128) * (other.limbs[j] as u128);
+   [0m[34m│[0m                                                                                 [0m[34m--------[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Unexpected =, expected one of bool, comptime, crate, dep, Field, fn, fmtstr, impl, str, &, (, [, integer type, Ident[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:33:29
+   [0m[34m│[0m
+[0m[34m33[0m [0m[34m│[0m         let mut carry: u128 = 0;
+   [0m[34m│[0m                             [0m[34m-[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Unexpected =, expected one of bool, comptime, crate, dep, Field, fn, fmtstr, impl, str, &, (, [, integer type, Ident[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:35:29
+   [0m[34m│[0m
+[0m[34m35[0m [0m[34m│[0m             let total: u128 = acc[k] + carry;
+   [0m[34m│[0m                             [0m[34m-[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: Expected a = but found [[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:35:34
+   [0m[34m│[0m
+[0m[34m35[0m [0m[34m│[0m             let total: u128 = acc[k] + carry;
+   [0m[34m│[0m                                  [0m[34m-[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: TooManyBits[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:25:23
+   [0m[34m│[0m
+[0m[34m25[0m [0m[34m│[0m         let limb_max: u128 = 72057594037927936; // 2^56
+   [0m[34m│[0m                       [0m[34m----[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: TooManyBits[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:26:23
+   [0m[34m│[0m
+[0m[34m26[0m [0m[34m│[0m         let mut acc: [u128; 14] = [0; 14];
+   [0m[34m│[0m                       [0m[34m----[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: TooManyBits[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:29:57
+   [0m[34m│[0m
+[0m[34m29[0m [0m[34m│[0m                 acc[i+j] = acc[i+j] + (self.limbs[i] as u128) * (other.limbs[j] as u128);
+   [0m[34m│[0m                                                         [0m[34m----[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: TooManyBits[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:29:84
+   [0m[34m│[0m
+[0m[34m29[0m [0m[34m│[0m                 acc[i+j] = acc[i+j] + (self.limbs[i] as u128) * (other.limbs[j] as u128);
+   [0m[34m│[0m                                                                                    [0m[34m----[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: TooManyBits[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:33:24
+   [0m[34m│[0m
+[0m[34m33[0m [0m[34m│[0m         let mut carry: u128 = 0;
+   [0m[34m│[0m                        [0m[34m----[0m
+   [0m[34m│[0m
+
+[0m[1m[38;5;9merror[0m[1m: TooManyBits[0m
+   [0m[34m┌─[0m /home_data/mvillagra/Repos/FPUNA-ZK-Bridge/noir-zero/noir-bigint-bls12_381/src/lib.nr:35:24
+   [0m[34m│[0m
+[0m[34m35[0m [0m[34m│[0m             let total: u128 = acc[k] + carry;
+   [0m[34m│[0m                        [0m[34m----[0m
+   [0m[34m│[0m
+
+Aborting due to 18 previous errors

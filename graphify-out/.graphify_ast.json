@@ -1,0 +1,232 @@
+{
+  "nodes": [
+    {
+      "id": "pkg_bigint",
+      "label": "noir_bigint_bls12_381",
+      "file_type": "code"
+    },
+    {
+      "id": "pkg_bls_sig",
+      "label": "noir_bls_signature",
+      "file_type": "code"
+    },
+    {
+      "id": "BigUint56",
+      "label": "BigUint56",
+      "file_type": "code"
+    },
+    {
+      "id": "PrimeField",
+      "label": "PrimeField (Fp)",
+      "file_type": "code"
+    },
+    {
+      "id": "G1Point",
+      "label": "G1Point (swcurve)",
+      "file_type": "code"
+    },
+    {
+      "id": "Fp2",
+      "label": "Fp2",
+      "file_type": "code"
+    },
+    {
+      "id": "Fp6",
+      "label": "Fp6",
+      "file_type": "code"
+    },
+    {
+      "id": "Fp12",
+      "label": "Fp12",
+      "file_type": "code"
+    },
+    {
+      "id": "G2Point",
+      "label": "G2Point",
+      "file_type": "code"
+    },
+    {
+      "id": "miller_loop",
+      "label": "miller_loop()",
+      "file_type": "code"
+    },
+    {
+      "id": "final_exp",
+      "label": "final_exp()",
+      "file_type": "code"
+    },
+    {
+      "id": "pair",
+      "label": "pair()",
+      "file_type": "code"
+    },
+    {
+      "id": "pair_multi",
+      "label": "pair_multi()",
+      "file_type": "code"
+    },
+    {
+      "id": "verify_bls",
+      "label": "verify_bls_signature()",
+      "file_type": "code"
+    },
+    {
+      "id": "mul_by_xi",
+      "label": "mul_by_xi()",
+      "file_type": "code"
+    },
+    {
+      "id": "montgomery",
+      "label": "montgomery_reduce()",
+      "file_type": "code"
+    },
+    {
+      "id": "readme",
+      "label": "README",
+      "file_type": "document"
+    }
+  ],
+  "edges": [
+    {
+      "source": "pkg_bls_sig",
+      "target": "pkg_bigint",
+      "relation": "depends_on",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "PrimeField",
+      "target": "BigUint56",
+      "relation": "wraps",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "montgomery",
+      "target": "BigUint56",
+      "relation": "operates_on",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "PrimeField",
+      "target": "montgomery",
+      "relation": "uses",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "Fp2",
+      "target": "PrimeField",
+      "relation": "built_from",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "Fp6",
+      "target": "Fp2",
+      "relation": "built_from",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "Fp6",
+      "target": "mul_by_xi",
+      "relation": "uses",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "mul_by_xi",
+      "target": "Fp2",
+      "relation": "operates_on",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "Fp12",
+      "target": "Fp6",
+      "relation": "built_from",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "G1Point",
+      "target": "PrimeField",
+      "relation": "coordinates_in",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "G2Point",
+      "target": "Fp2",
+      "relation": "coordinates_in",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "miller_loop",
+      "target": "G1Point",
+      "relation": "takes_input",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "miller_loop",
+      "target": "G2Point",
+      "relation": "takes_input",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "miller_loop",
+      "target": "Fp12",
+      "relation": "returns",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "final_exp",
+      "target": "Fp12",
+      "relation": "operates_on",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "pair",
+      "target": "miller_loop",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "pair",
+      "target": "final_exp",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "pair",
+      "target": "Fp12",
+      "relation": "returns",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "pair_multi",
+      "target": "pair",
+      "relation": "extends",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "verify_bls",
+      "target": "pair",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "verify_bls",
+      "target": "G1Point",
+      "relation": "takes_input",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "verify_bls",
+      "target": "G2Point",
+      "relation": "takes_input",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "readme",
+      "target": "verify_bls",
+      "relation": "documents",
+      "confidence": "EXTRACTED"
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

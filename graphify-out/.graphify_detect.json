@@ -1,0 +1,33 @@
+{
+  "files": {
+    "code": [
+      "noir-bigint-bls12_381/src/lib.nr",
+      "noir-bigint-bls12_381/src/prime_field.nr",
+      "noir-bls-signature/src/lib.nr",
+      "noir-bls-signature/src/bls12_381.nr",
+      "noir-bls-signature/src/bls12_381/fp2.nr",
+      "noir-bls-signature/src/bls12_381/fp6.nr",
+      "noir-bls-signature/src/bls12_381/fp12.nr",
+      "noir-bls-signature/src/bls12_381/g2.nr",
+      "noir-bls-signature/src/bls12_381/swcurve.nr",
+      "noir-bls-signature/src/bls12_381/pairing.nr",
+      "noir-bls-signature/src/bls12_381/signature.nr"
+    ],
+    "document": [
+      "readme.md",
+      "AGENTS.md",
+      "resultados.md",
+      "instructions.md",
+      "output.txt"
+    ],
+    "paper": [],
+    "image": [],
+    "video": []
+  },
+  "total_files": 16,
+  "total_words": 15847,
+  "needs_graph": false,
+  "warning": "Corpus is ~4,432 words - fits in a single context window. You may not need a graph.",
+  "skipped_sensitive": [],
+  "graphifyignore_patterns": 0
+}

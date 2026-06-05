@@ -1,0 +1,90 @@
+{
+  "communities": {
+    "0": [
+      "Fp12",
+      "final_exp",
+      "miller_loop",
+      "pair",
+      "pair_multi"
+    ],
+    "1": [
+      "BigUint56",
+      "G1Point",
+      "PrimeField",
+      "montgomery"
+    ],
+    "2": [
+      "Fp2",
+      "Fp6",
+      "mul_by_xi"
+    ],
+    "3": [
+      "G2Point",
+      "readme",
+      "verify_bls"
+    ],
+    "4": [
+      "pkg_bigint",
+      "pkg_bls_sig"
+    ]
+  },
+  "cohesion": {},
+  "god_nodes": [],
+  "surprises": [
+    {
+      "source": "Fp2",
+      "target": "PrimeField (Fp)",
+      "source_files": [
+        "",
+        ""
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "built_from",
+      "note": "Bridges community 1 \u2192 community 2"
+    },
+    {
+      "source": "miller_loop()",
+      "target": "G1Point (swcurve)",
+      "source_files": [
+        "",
+        ""
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "takes_input",
+      "note": "Bridges community 1 \u2192 community 0"
+    },
+    {
+      "source": "verify_bls_signature()",
+      "target": "G1Point (swcurve)",
+      "source_files": [
+        "",
+        ""
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "takes_input",
+      "note": "Bridges community 1 \u2192 community 3"
+    },
+    {
+      "source": "G2Point",
+      "target": "Fp2",
+      "source_files": [
+        "",
+        ""
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "coordinates_in",
+      "note": "Bridges community 2 \u2192 community 3"
+    },
+    {
+      "source": "Fp12",
+      "target": "Fp6",
+      "source_files": [
+        "",
+        ""
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "built_from",
+      "note": "Bridges community 2 \u2192 community 0"
+    }
+  ]
+}

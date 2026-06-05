@@ -1,0 +1,278 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "noir_bigint_bls12_381",
+      "file_type": "code",
+      "id": "pkg_bigint"
+    },
+    {
+      "label": "noir_bls_signature",
+      "file_type": "code",
+      "id": "pkg_bls_sig"
+    },
+    {
+      "label": "BigUint56",
+      "file_type": "code",
+      "id": "BigUint56"
+    },
+    {
+      "label": "PrimeField (Fp)",
+      "file_type": "code",
+      "id": "PrimeField"
+    },
+    {
+      "label": "G1Point (swcurve)",
+      "file_type": "code",
+      "id": "G1Point"
+    },
+    {
+      "label": "Fp2",
+      "file_type": "code",
+      "id": "Fp2"
+    },
+    {
+      "label": "Fp6",
+      "file_type": "code",
+      "id": "Fp6"
+    },
+    {
+      "label": "Fp12",
+      "file_type": "code",
+      "id": "Fp12"
+    },
+    {
+      "label": "G2Point",
+      "file_type": "code",
+      "id": "G2Point"
+    },
+    {
+      "label": "miller_loop()",
+      "file_type": "code",
+      "id": "miller_loop"
+    },
+    {
+      "label": "final_exp()",
+      "file_type": "code",
+      "id": "final_exp"
+    },
+    {
+      "label": "pair()",
+      "file_type": "code",
+      "id": "pair"
+    },
+    {
+      "label": "pair_multi()",
+      "file_type": "code",
+      "id": "pair_multi"
+    },
+    {
+      "label": "verify_bls_signature()",
+      "file_type": "code",
+      "id": "verify_bls"
+    },
+    {
+      "label": "mul_by_xi()",
+      "file_type": "code",
+      "id": "mul_by_xi"
+    },
+    {
+      "label": "montgomery_reduce()",
+      "file_type": "code",
+      "id": "montgomery"
+    },
+    {
+      "label": "README",
+      "file_type": "document",
+      "id": "readme"
+    }
+  ],
+  "edges": [
+    {
+      "relation": "depends_on",
+      "confidence": "EXTRACTED",
+      "_src": "pkg_bls_sig",
+      "_tgt": "pkg_bigint",
+      "source": "pkg_bigint",
+      "target": "pkg_bls_sig"
+    },
+    {
+      "relation": "wraps",
+      "confidence": "EXTRACTED",
+      "_src": "PrimeField",
+      "_tgt": "BigUint56",
+      "source": "BigUint56",
+      "target": "PrimeField"
+    },
+    {
+      "relation": "operates_on",
+      "confidence": "EXTRACTED",
+      "_src": "montgomery",
+      "_tgt": "BigUint56",
+      "source": "BigUint56",
+      "target": "montgomery"
+    },
+    {
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "_src": "PrimeField",
+      "_tgt": "montgomery",
+      "source": "PrimeField",
+      "target": "montgomery"
+    },
+    {
+      "relation": "built_from",
+      "confidence": "EXTRACTED",
+      "_src": "Fp2",
+      "_tgt": "PrimeField",
+      "source": "PrimeField",
+      "target": "Fp2"
+    },
+    {
+      "relation": "coordinates_in",
+      "confidence": "EXTRACTED",
+      "_src": "G1Point",
+      "_tgt": "PrimeField",
+      "source": "PrimeField",
+      "target": "G1Point"
+    },
+    {
+      "relation": "takes_input",
+      "confidence": "EXTRACTED",
+      "_src": "miller_loop",
+      "_tgt": "G1Point",
+      "source": "G1Point",
+      "target": "miller_loop"
+    },
+    {
+      "relation": "takes_input",
+      "confidence": "EXTRACTED",
+      "_src": "verify_bls",
+      "_tgt": "G1Point",
+      "source": "G1Point",
+      "target": "verify_bls"
+    },
+    {
+      "relation": "built_from",
+      "confidence": "EXTRACTED",
+      "_src": "Fp6",
+      "_tgt": "Fp2",
+      "source": "Fp2",
+      "target": "Fp6"
+    },
+    {
+      "relation": "operates_on",
+      "confidence": "EXTRACTED",
+      "_src": "mul_by_xi",
+      "_tgt": "Fp2",
+      "source": "Fp2",
+      "target": "mul_by_xi"
+    },
+    {
+      "relation": "coordinates_in",
+      "confidence": "EXTRACTED",
+      "_src": "G2Point",
+      "_tgt": "Fp2",
+      "source": "Fp2",
+      "target": "G2Point"
+    },
+    {
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "_src": "Fp6",
+      "_tgt": "mul_by_xi",
+      "source": "Fp6",
+      "target": "mul_by_xi"
+    },
+    {
+      "relation": "built_from",
+      "confidence": "EXTRACTED",
+      "_src": "Fp12",
+      "_tgt": "Fp6",
+      "source": "Fp6",
+      "target": "Fp12"
+    },
+    {
+      "relation": "returns",
+      "confidence": "EXTRACTED",
+      "_src": "miller_loop",
+      "_tgt": "Fp12",
+      "source": "Fp12",
+      "target": "miller_loop"
+    },
+    {
+      "relation": "operates_on",
+      "confidence": "EXTRACTED",
+      "_src": "final_exp",
+      "_tgt": "Fp12",
+      "source": "Fp12",
+      "target": "final_exp"
+    },
+    {
+      "relation": "returns",
+      "confidence": "EXTRACTED",
+      "_src": "pair",
+      "_tgt": "Fp12",
+      "source": "Fp12",
+      "target": "pair"
+    },
+    {
+      "relation": "takes_input",
+      "confidence": "EXTRACTED",
+      "_src": "miller_loop",
+      "_tgt": "G2Point",
+      "source": "G2Point",
+      "target": "miller_loop"
+    },
+    {
+      "relation": "takes_input",
+      "confidence": "EXTRACTED",
+      "_src": "verify_bls",
+      "_tgt": "G2Point",
+      "source": "G2Point",
+      "target": "verify_bls"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "_src": "pair",
+      "_tgt": "miller_loop",
+      "source": "miller_loop",
+      "target": "pair"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "_src": "pair",
+      "_tgt": "final_exp",
+      "source": "final_exp",
+      "target": "pair"
+    },
+    {
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "_src": "pair_multi",
+      "_tgt": "pair",
+      "source": "pair",
+      "target": "pair_multi"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "_src": "verify_bls",
+      "_tgt": "pair",
+      "source": "pair",
+      "target": "verify_bls"
+    },
+    {
+      "relation": "documents",
+      "confidence": "EXTRACTED",
+      "_src": "readme",
+      "_tgt": "verify_bls",
+      "source": "verify_bls",
+      "target": "readme"
+    }
+  ]
+}

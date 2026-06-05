@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>graphify - </title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f1a; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display: flex; height: 100vh; overflow: hidden; }
+  #graph { flex: 1; }
+  #sidebar { width: 280px; background: #1a1a2e; border-left: 1px solid #2a2a4e; display: flex; flex-direction: column; overflow: hidden; }
+  #search-wrap { padding: 12px; border-bottom: 1px solid #2a2a4e; }
+  #search { width: 100%; background: #0f0f1a; border: 1px solid #3a3a5e; color: #e0e0e0; padding: 7px 10px; border-radius: 6px; font-size: 13px; outline: none; }
+  #search:focus { border-color: #4E79A7; }
+  #search-results { max-height: 140px; overflow-y: auto; padding: 4px 12px; border-bottom: 1px solid #2a2a4e; display: none; }
+  .search-item { padding: 4px 6px; cursor: pointer; border-radius: 4px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .search-item:hover { background: #2a2a4e; }
+  #info-panel { padding: 14px; border-bottom: 1px solid #2a2a4e; min-height: 140px; }
+  #info-panel h3 { font-size: 13px; color: #aaa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  #info-content { font-size: 13px; color: #ccc; line-height: 1.6; }
+  #info-content .field { margin-bottom: 5px; }
+  #info-content .field b { color: #e0e0e0; }
+  #info-content .empty { color: #555; font-style: italic; }
+  .neighbor-link { display: block; padding: 2px 6px; margin: 2px 0; border-radius: 3px; cursor: pointer; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid #333; }
+  .neighbor-link:hover { background: #2a2a4e; }
+  #neighbors-list { max-height: 160px; overflow-y: auto; margin-top: 4px; }
+  #legend-wrap { flex: 1; overflow-y: auto; padding: 12px; }
+  #legend-wrap h3 { font-size: 13px; color: #aaa; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .legend-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; border-radius: 4px; font-size: 12px; }
+  .legend-item:hover { background: #2a2a4e; padding-left: 4px; }
+  .legend-item.dimmed { opacity: 0.35; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .legend-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .legend-count { color: #666; font-size: 11px; }
+  #stats { padding: 10px 14px; border-top: 1px solid #2a2a4e; font-size: 11px; color: #555; }
+  .toggle-wrap { padding: 12px; border-bottom: 1px solid #2a2a4e; display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+  .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2a2a4e; transition: .4s; border-radius: 20px; }
+  .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+  input:checked + .slider { background-color: #4E79A7; }
+  input:checked + .slider:before { transform: translateX(14px); }
+  .metric-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 6px; text-transform: uppercase; }
+  .metric-high { background: #ef4444; color: #fff; }
+  .metric-medium { background: #f59e0b; color: #fff; }
+  .metric-low { background: #10b981; color: #fff; }
+  #heatmap-legend { display: none; margin-top: 10px; padding: 10px; background: #0f0f1a; border-radius: 6px; border: 1px solid #2a2a4e; }
+  .h-leg-item { display: flex; align-items: center; gap: 8px; font-size: 11px; margin: 4px 0; }
+  .h-leg-bar { height: 10px; flex: 1; border-radius: 5px; background: linear-gradient(to right, #10b981, #f59e0b, #ef4444); }
+  /* Schema Modal */
+  #schema-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+  #schema-modal-content { background-color: #1a1a2e; margin: 5% auto; padding: 20px; border: 1px solid #3a3a5e; border-radius: 12px; width: 60%; max-height: 80%; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  #schema-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #2a2a4e; padding-bottom: 10px; }
+  #schema-modal-header h2 { font-size: 18px; color: #fff; }
+  .close-modal { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+  .close-modal:hover { color: #fff; }
+  .schema-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .schema-table th { text-align: left; background: #2a2a4e; padding: 10px; font-size: 13px; color: #aaa; text-transform: uppercase; }
+  .schema-table td { padding: 10px; border-bottom: 1px solid #2a2a4e; font-size: 13px; color: #ccc; }
+  .schema-table tr:hover { background: #1e1e36; }
+  .schema-pk { color: #f1c40f; font-weight: bold; }
+  .schema-fk { color: #8b5cf6; font-style: italic; }
+  .lineage-item { background: #2a2a4e; padding: 10px; border-radius: 6px; border-left: 3px solid #4E79A7; cursor: pointer; transition: background 0.2s; }
+  .lineage-item:hover { background: #3a3a5e; }
+</style>
+</head>
+<body>
+<div id="graph"></div>
+<div id="sidebar">
+  <div style="padding: 14px; border-bottom: 1px solid #2a2a4e;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h2 id="proj-name" style="font-size: 16px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></h2>
+        <span onclick="editProjectName()" style="cursor:pointer; opacity: 0.5; font-size: 12px;" title="Rename Project">✏️</span>
+    </div>
+  </div>
+  <div class="toggle-wrap">
+    <span>Deep Dive Mode</span>
+    <label class="switch">
+      <input type="checkbox" id="granularity-toggle" >
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="toggle-wrap">
+    <span>Full Detail Mode</span>
+    <label class="switch">
+      <input type="checkbox" id="full-detail-toggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="toggle-wrap">
+    <span>Heatmap Mode</span>
+    <label class="switch">
+      <input type="checkbox" id="heatmap-toggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div id="heatmap-legend">
+    <div class="h-leg-item"><span>Low Risk</span><div class="h-leg-bar"></div><span>High Risk</span></div>
+  </div>
+  <div class="toggle-wrap">
+    <span>Simulation Mode</span>
+    <label class="switch">
+      <input type="checkbox" id="simulation-toggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div id="sim-hint" style="display:none; padding: 10px; background: #2a2a4e; font-size: 11px; color: #4E79A7; text-align: center;">
+    🏗️ Click nodes to simulate removal
+  </div>
+  <div id="info-panel">
+    <h3>Node Info</h3>
+    <div id="info-content"><span class="empty">Click a node to inspect it</span></div>
+  </div>
+  <div id="legend-wrap">
+    <h3>Communities</h3>
+    <div id="legend"></div>
+  </div>
+  <div id="stats">17 nodes &middot; 23 edges &middot; 5 communities</div>
+</div>
+<script>
+const RAW_NODES = [{"id": "pkg_bigint", "label": "noir_bigint_bls12_381", "color": {"background": "#59A14F", "border": "#59A14F", "highlight": {"background": "#ffffff", "border": "#59A14F"}}, "size": 18.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "noir_bigint_bls12_381", "community": 4, "community_name": "Community 4", "source_file": "", "file_type": "code", "degree": 1, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "pkg_bls_sig", "label": "noir_bls_signature", "color": {"background": "#59A14F", "border": "#59A14F", "highlight": {"background": "#ffffff", "border": "#59A14F"}}, "size": 18.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "noir_bls_signature", "community": 4, "community_name": "Community 4", "source_file": "", "file_type": "code", "degree": 1, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "BigUint56", "label": "BigUint56", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 24.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "BigUint56", "community": 1, "community_name": "Community 1", "source_file": "", "file_type": "code", "degree": 2, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "PrimeField", "label": "PrimeField (Fp)", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 36.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "PrimeField (Fp)", "community": 1, "community_name": "Community 1", "source_file": "", "file_type": "code", "degree": 4, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "G1Point", "label": "G1Point (swcurve)", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 30.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "G1Point (swcurve)", "community": 1, "community_name": "Community 1", "source_file": "", "file_type": "code", "degree": 3, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "Fp2", "label": "Fp2", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 36.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "Fp2", "community": 2, "community_name": "Community 2", "source_file": "", "file_type": "code", "degree": 4, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "Fp6", "label": "Fp6", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 30.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "Fp6", "community": 2, "community_name": "Community 2", "source_file": "", "file_type": "code", "degree": 3, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "Fp12", "label": "Fp12", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 36.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "Fp12", "community": 0, "community_name": "Community 0", "source_file": "", "file_type": "code", "degree": 4, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "G2Point", "label": "G2Point", "color": {"background": "#76B7B2", "border": "#76B7B2", "highlight": {"background": "#ffffff", "border": "#76B7B2"}}, "size": 30.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "G2Point", "community": 3, "community_name": "Community 3", "source_file": "", "file_type": "code", "degree": 3, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "miller_loop", "label": "miller_loop()", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 36.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "miller_loop()", "community": 0, "community_name": "Community 0", "source_file": "", "file_type": "code", "degree": 4, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "final_exp", "label": "final_exp()", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 24.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "final_exp()", "community": 0, "community_name": "Community 0", "source_file": "", "file_type": "code", "degree": 2, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "pair", "label": "pair()", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 42.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "pair()", "community": 0, "community_name": "Community 0", "source_file": "", "file_type": "code", "degree": 5, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "pair_multi", "label": "pair_multi()", "color": {"background": "#4E79A7", "border": "#4E79A7", "highlight": {"background": "#ffffff", "border": "#4E79A7"}}, "size": 18.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "pair_multi()", "community": 0, "community_name": "Community 0", "source_file": "", "file_type": "code", "degree": 1, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "verify_bls", "label": "verify_bls_signature()", "color": {"background": "#76B7B2", "border": "#76B7B2", "highlight": {"background": "#ffffff", "border": "#76B7B2"}}, "size": 36.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "verify_bls_signature()", "community": 3, "community_name": "Community 3", "source_file": "", "file_type": "code", "degree": 4, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "mul_by_xi", "label": "mul_by_xi()", "color": {"background": "#E15759", "border": "#E15759", "highlight": {"background": "#ffffff", "border": "#E15759"}}, "size": 24.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "mul_by_xi()", "community": 2, "community_name": "Community 2", "source_file": "", "file_type": "code", "degree": 2, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "montgomery", "label": "montgomery_reduce()", "color": {"background": "#F28E2B", "border": "#F28E2B", "highlight": {"background": "#ffffff", "border": "#F28E2B"}}, "size": 24.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "montgomery_reduce()", "community": 1, "community_name": "Community 1", "source_file": "", "file_type": "code", "degree": 2, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}, {"id": "readme", "label": "README", "color": {"background": "#76B7B2", "border": "#76B7B2", "highlight": {"background": "#ffffff", "border": "#76B7B2"}}, "size": 18.0, "shape": "dot", "image": null, "shadow": false, "font": {"size": 12, "color": "#ffffff"}, "title": "README", "community": 3, "community_name": "Community 3", "source_file": "", "file_type": "document", "degree": 1, "_level": null, "_granularity": "low", "heat": 0.0, "complexity": 1, "loc": 1, "_type": "FUNCTION", "columns": []}];
+const RAW_EDGES = [{"from": "pkg_bigint", "to": "pkg_bls_sig", "label": "depends_on", "title": "depends_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "BigUint56", "to": "PrimeField", "label": "wraps", "title": "wraps [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "BigUint56", "to": "montgomery", "label": "operates_on", "title": "operates_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "PrimeField", "to": "montgomery", "label": "uses", "title": "uses [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "PrimeField", "to": "Fp2", "label": "built_from", "title": "built_from [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "PrimeField", "to": "G1Point", "label": "coordinates_in", "title": "coordinates_in [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "G1Point", "to": "miller_loop", "label": "takes_input", "title": "takes_input [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "G1Point", "to": "verify_bls", "label": "takes_input", "title": "takes_input [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "Fp2", "to": "Fp6", "label": "built_from", "title": "built_from [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "Fp2", "to": "mul_by_xi", "label": "operates_on", "title": "operates_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "Fp2", "to": "G2Point", "label": "coordinates_in", "title": "coordinates_in [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "Fp6", "to": "mul_by_xi", "label": "uses", "title": "uses [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "Fp6", "to": "Fp12", "label": "built_from", "title": "built_from [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "Fp12", "to": "miller_loop", "label": "returns", "title": "returns [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "Fp12", "to": "final_exp", "label": "operates_on", "title": "operates_on [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "Fp12", "to": "pair", "label": "returns", "title": "returns [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "G2Point", "to": "miller_loop", "label": "takes_input", "title": "takes_input [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "G2Point", "to": "verify_bls", "label": "takes_input", "title": "takes_input [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "miller_loop", "to": "pair", "label": "calls", "title": "calls [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "final_exp", "to": "pair", "label": "calls", "title": "calls [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "pair", "to": "pair_multi", "label": "extends", "title": "extends [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "pair", "to": "verify_bls", "label": "calls", "title": "calls [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}, {"from": "verify_bls", "to": "readme", "label": "documents", "title": "documents [EXTRACTED]", "dashes": false, "width": 2, "color": {"opacity": 0.7}, "confidence": "EXTRACTED"}];
+const LEGEND = [];
+
+// HTML-escape helper — prevents XSS when injecting graph data into innerHTML
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Build vis datasets
+let currentGranularity = 'low'; // default
+let heatmapEnabled = false;
+let fullDetailMode = false;
+const nodesDS = new vis.DataSet(RAW_NODES.map(n => {
+  const nodeObj = {
+    id: n.id, label: n.label, color: n.color,
+    size: n.size,
+    shape: (n._type === 'STATE_STORE') ? 'hexagon' : (n.shape || 'dot'),
+    font: n.font, title: n.title,
+    hidden: n._granularity === 'high' && currentGranularity === 'low',
+    _community: n.community, _community_name: n.community_name,
+    _source_file: n.source_file, _file_type: n.file_type, _degree: n.degree,
+    _granularity: n._granularity, _level: n._level,
+    _heat: n.heat, _complexity: n.complexity, _loc: n.loc, _type: n._type,
+    _columns: n.columns || [],
+    _sim_ghosted: false
+  };
+  if (n.image) nodeObj.image = n.image;
+  if (n.shadow) nodeObj.shadow = { enabled: true, color: 'rgba(0,0,0,0.5)', size: 10, x: 5, y: 5 };
+  return nodeObj;
+}));
+
+const edgesDS = new vis.DataSet(RAW_EDGES.map((e, i) => ({
+  id: i, from: e.from, to: e.to,
+  label: '',
+  title: e.title,
+  dashes: e.dashes,
+  width: e.width,
+  color: e.color,
+  hidden: false,
+  arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+})));
+
+function updateGranularity(mode) {
+  currentGranularity = mode;
+  updateZoomLevels();
+}
+
+let simulationModeEnabled = false;
+function updateStats() {
+  const visibleNodes = nodesDS.get({ filter: n => !n.hidden && !n._sim_ghosted });
+  const visibleEdges = edgesDS.get({ filter: e => !e.hidden });
+  document.getElementById('stats').innerHTML = `${visibleNodes.length} nodes &middot; ${visibleEdges.length} edges &middot; (Simulation active)`;
+}
+
+function toggleSimulationMode(enabled) {
+  simulationModeEnabled = enabled;
+  if (!enabled) {
+    // Reset all ghosted nodes
+    nodesDS.update(RAW_NODES.map(n => ({ id: n.id, opacity: 1, _sim_ghosted: false })));
+    updateZoomLevels();
+    document.getElementById('stats').innerHTML = "%STATS%"; // Use the template original
+  }
+  document.getElementById('sim-hint').style.display = enabled ? 'block' : 'none';
+}
+
+function ghostNode(nodeId) {
+  const n = nodesDS.get(nodeId);
+  if (!n) return;
+  const isGhosted = !n._sim_ghosted;
+  nodesDS.update({ id: nodeId, _sim_ghosted: isGhosted, opacity: isGhosted ? 0.2 : 1 });
+  
+  updateZoomLevels();
+  updateStats();
+}
+
+function updateZoomLevels() {
+  const scale = network.getScale();
+  // Thresholds:
+  // < 0.4: Only L0 (Global)
+  // < 0.8: L0 + L1 (Strategic)
+  // < 1.3: L0 + L1 + L2 (Implementation)
+  // >= 1.3: All (L3 Deep Dive)
+  
+  const nodeUpdates = RAW_NODES.map(n => {
+    let shouldHide = false;
+    
+    if (!fullDetailMode) {
+      if (scale < 0.4 && n._level > 0) shouldHide = true;
+      else if (scale < 0.8 && n._level > 1) shouldHide = true;
+      else if (scale < 1.3 && n._level > 2) shouldHide = true;
+    }
+    
+    // Also respect the global granularity toggle
+    if (n._granularity === 'high' && currentGranularity === 'low') shouldHide = true;
+    
+    return { id: n.id, hidden: shouldHide };
+  });
+  nodesDS.update(nodeUpdates);
+
+  // Sync edge visibility
+  const visibleNodeIds = new Set(nodesDS.get({ filter: n => !n.hidden }).map(n => n.id));
+  const edgeUpdates = RAW_EDGES.map((e, i) => ({
+    id: i,
+    hidden: !visibleNodeIds.has(e.from) || !visibleNodeIds.has(e.to)
+  }));
+  edgesDS.update(edgeUpdates);
+}
+
+const container = document.getElementById('graph');
+const network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
+  physics: {
+    enabled: true,
+    solver: 'forceAtlas2Based',
+    forceAtlas2Based: {
+      gravitationalConstant: -60,
+      centralGravity: 0.005,
+      springLength: 120,
+      springConstant: 0.08,
+      damping: 0.4,
+      avoidOverlap: 0.8,
+    },
+    stabilization: { iterations: 200, fit: true },
+  },
+  interaction: {
+    hover: true,
+    tooltipDelay: 100,
+    hideEdgesOnDrag: true,
+    navigationButtons: false,
+    keyboard: false,
+  },
+  nodes: { shape: 'dot', borderWidth: 1.5 },
+  edges: { smooth: { type: 'continuous', roundness: 0.2 }, selectionWidth: 3 },
+});
+
+network.once('stabilizationIterationsDone', () => {
+  network.setOptions({ physics: { enabled: false } });
+  updateZoomLevels(); // Initial sync
+});
+
+network.on('zoom', updateZoomLevels);
+network.on('dragEnd', updateZoomLevels);
+
+function showInfo(nodeId) {
+  const n = nodesDS.get(nodeId);
+  if (!n) return;
+  const neighborIds = network.getConnectedNodes(nodeId);
+  const neighborItems = neighborIds.map(nid => {
+    const nb = nodesDS.get(nid);
+    const color = nb ? nb.color.background : '#555';
+    return `<span class="neighbor-link" style="border-left-color:${esc(color)}" onclick="focusNode(${JSON.stringify(nid)})">${esc(nb ? nb.label : nid)}</span>`;
+  }).join('');
+  
+  const heatClass = n._heat > 0.7 ? 'metric-high' : (n._heat > 0.4 ? 'metric-medium' : 'metric-low');
+  
+  // Phase 5: Refactoring Strategist logic
+  let strategy = '';
+  if (n._heat > 0.5) {
+    const steps = [];
+    if (n._degree > 12) steps.push("<b>Decouple:</b> Node is a 'God Hub'. Extract interfaces to reduce coupling.");
+    if (n._complexity > 15) steps.push("<b>Decompose:</b> Logic density is high. Split into smaller sub-functions.");
+    if (n._granularity === 'low' && n._degree > 20) steps.push("<b>Domain Split:</b> This bridge node anchors too many communities. Split by domain.");
+    
+    if (steps.length > 0) {
+      strategy = `<div style="margin-top:12px; padding:10px; background:#2a2a4e; border-radius:6px; border-left:3px solid #f59e0b;">
+        <div style="font-size:11px; color:#f59e0b; font-weight:bold; margin-bottom:5px;">🚀 REFACTORING STRATEGY</div>
+        <ul style="padding-left:15px; font-size:11px; color:#ccc;">
+          ${steps.map(s => `<li style="margin-bottom:4px;">${s}</li>`).join('')}
+        </ul>
+      </div>`;
+    }
+  }
+
+    const typeLabel = n._type === 'DB_TABLE' ? 'DB Table' : (n._type === 'DB_COLLECTION' ? 'DB Collection' : (n._type === 'SCHEMA' ? 'Schema' : esc(n._file_type || 'unknown')));
+    
+    document.getElementById('info-content').innerHTML = `
+    <div class="field"><b>${esc(n.label)}</b> ${n._type === 'STATE_STORE' ? '<span class="metric-badge" style="background:#8b5cf6">Store</span>' : ''}</div>
+    <div class="field">Type: <span style="color:#f1c40f; font-weight:bold">${typeLabel}</span></div>
+    <div class="field">Risk: <span class="metric-badge ${heatClass}">${(n._heat * 100).toFixed(0)}%</span></div>
+    <div class="field">Complexity: ${n._complexity || 1}</div>
+    <div class="field">LOC: ${n._loc || 1}</div>
+    ${n._level !== undefined ? `<div class="field">Level: ${n._level}</div>` : ''}
+    <div class="field">Owner: <span class="metric-badge" style="background:#4b5563;color:#fff">${esc(n._owner || 'unowned')}</span></div>
+    ${n._sensitivity === 'HIGH' ? '<div class="field">Sensitivity: <span class="metric-badge" style="background:#dc2626;color:#fff">⚠️ HIGH RISK</span></div>' : ''}
+    <div class="field">Community: ${esc(n._community_name)}</div>
+    <div class="field">Source: ${esc(n._source_file || '-')}</div>
+    <div class="field">Degree: ${n._degree}</div>
+    ${n._columns && n._columns.length > 0 ? `
+      <button id="view-schema-btn" onclick="openSchemaModal(decodeURIComponent('${encodeURIComponent(n.id)}'))" style="margin-top:10px; width:100%; background:#f1c40f; color:#000; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:12px; box-shadow: 0 0 10px rgba(241, 196, 15, 0.3);">🔍 VIEW DETAILED SCHEMA</button>
+    ` : ''}
+    ${strategy}
+    ${neighborIds.length ? `<div class="field" style="margin-top:8px;color:#aaa;font-size:11px">Neighbors (${neighborIds.length})</div><div id="neighbors-list">${neighborItems}</div>` : ''}
+  `;
+}
+
+function openSchemaModal(nodeId) {
+  const n = nodesDS.get(nodeId);
+  if (!n || !n._columns) return;
+  
+  const modal = document.getElementById('schema-modal');
+  const title = document.getElementById('schema-title');
+  const body = document.getElementById('schema-body');
+  
+  title.innerText = `Schema: ${n.label}`;
+  
+  // Section 1: Table Schema
+  let html = `<div style="margin-bottom:20px;">
+    <h3 style="font-size:14px; color:#f1c40f; margin-bottom:10px; text-transform:uppercase;">📊 Table Structure</h3>
+    <table class="schema-table">
+      <thead>
+        <tr><th>Field</th><th>Type</th><th>Connections</th></tr>
+      </thead>
+      <tbody>`;
+  
+  n._columns.forEach(col => {
+    const isPK = col.name === '_id' || col.name === 'id';
+    const fk = col.foreign_key ? `<span class="schema-fk">➔ ref ${esc(col.foreign_key)}</span>` : '';
+    html += `<tr>
+      <td class="${isPK ? 'schema-pk' : ''}">${esc(col.name)}${isPK ? ' (PK)' : ''}</td>
+      <td style="color:#888">${esc(col.type)}</td>
+      <td>${fk}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  
+  // Section 2: Lineage (Who calls this?)
+  const connectedIds = network.getConnectedNodes(nodeId);
+  const callers = [];
+  const relatedDBs = [];
+  
+  connectedIds.forEach(cid => {
+    const node = nodesDS.get(cid);
+    if (!node) return;
+    if (node._type === 'DB_TABLE' || node._type === 'DB_COLLECTION' || node._type === 'SCHEMA') {
+      relatedDBs.push(node);
+    } else {
+      callers.push(node);
+    }
+  });
+  
+  if (callers.length > 0) {
+    html += `<div style="margin-bottom:20px;">
+      <h3 style="font-size:14px; color:#4E79A7; margin-bottom:10px; text-transform:uppercase;">🔗 Calling Functions & Logic</h3>
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:8px;">
+        ${callers.map(c => `
+          <div class="lineage-item" onclick="closeSchemaModal(); focusNode('${c.id}')">
+            <span style="color:#ccc;">${esc(c.label)}</span>
+            <div style="font-size:9px; color:#666; margin-top:2px;">${esc(c._source_file)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  }
+  
+  if (relatedDBs.length > 0) {
+    html += `<div style="margin-bottom:20px;">
+      <h3 style="font-size:14px; color:#9b59b6; margin-bottom:10px; text-transform:uppercase;">🗄️ Related Schemas (FK/Lineage)</h3>
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:8px;">
+        ${relatedDBs.map(r => `
+          <div class="lineage-item" style="border-left-color:#f1c40f" onclick="closeSchemaModal(); focusNode('${r.id}')">
+            <span style="color:#f1c40f; font-weight:bold;">${esc(r.label)}</span>
+            <div style="font-size:9px; color:#666; margin-top:2px;">Type: ${esc(r._type)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  }
+  
+  body.innerHTML = html;
+  modal.style.display = 'block';
+}
+
+function closeSchemaModal() {
+  document.getElementById('schema-modal').style.display = 'none';
+}
+
+function postToVSCode(msg) {
+  if (typeof vscode !== 'undefined') {
+    vscode.postMessage(msg);
+  } else {
+    // External browser mode: use URI handler
+    if (msg.command === 'focusNode') {
+      window.location.href = `vscode://AnytechieStudio.graphify-vscode/focusNode?id=${encodeURIComponent(msg.nodeId)}`;
+    } else if (msg.command === 'renameProject') {
+       // Deep linking rename might be complex, let's stick to focus for now
+       alert("Rename is only available inside VS Code.");
+    }
+  }
+}
+
+function focusNode(nodeId) {
+  network.focus(nodeId, { scale: 1.4, animation: true });
+  network.selectNodes([nodeId]);
+  showInfo(nodeId);
+  postToVSCode({ command: 'focusNode', nodeId: nodeId });
+}
+
+// Track hovered node — hover detection is more reliable than click params
+let hoveredNodeId = null;
+network.on('hoverNode', params => {
+  hoveredNodeId = params.node;
+  container.style.cursor = 'pointer';
+});
+network.on('blurNode', () => {
+  hoveredNodeId = null;
+  container.style.cursor = 'default';
+});
+container.addEventListener('click', () => {
+  if (hoveredNodeId !== null) {
+    showInfo(hoveredNodeId);
+    network.selectNodes([hoveredNodeId]);
+  }
+});
+network.on('click', params => {
+  if (params.nodes.length > 0) {
+    if (simulationModeEnabled) {
+      ghostNode(params.nodes[0]);
+    } else {
+      showInfo(params.nodes[0]);
+    }
+  } else if (hoveredNodeId === null) {
+    document.getElementById('info-content').innerHTML = '<span class="empty">Click a node to inspect it</span>';
+  }
+});
+
+const searchInput = document.getElementById('search');
+const searchResults = document.getElementById('search-results');
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.toLowerCase().trim();
+  searchResults.innerHTML = '';
+  if (!q) { searchResults.style.display = 'none'; return; }
+  const matches = RAW_NODES.filter(n => n.label.toLowerCase().includes(q)).slice(0, 20);
+  if (!matches.length) { searchResults.style.display = 'none'; return; }
+  searchResults.style.display = 'block';
+  matches.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'search-item';
+    el.textContent = n.label;
+    el.style.borderLeft = `3 solid ${n.color.background}`;
+    el.style.paddingLeft = '8px';
+    el.onclick = () => {
+      network.focus(n.id, { scale: 1.5, animation: true });
+      network.selectNodes([n.id]);
+      showInfo(n.id);
+      searchResults.style.display = 'none';
+      searchInput.value = '';
+    };
+    searchResults.appendChild(el);
+  });
+});
+document.addEventListener('click', e => {
+  if (!searchResults.contains(e.target) && e.target !== searchInput)
+    searchResults.style.display = 'none';
+});
+
+const hiddenCommunities = new Set();
+const legendEl = document.getElementById('legend');
+LEGEND.forEach(c => {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  if (c.summary) item.title = c.summary;
+  item.innerHTML = `<div class="legend-dot" style="background:${c.color}"></div>
+    <span class="legend-label">${c.label}</span>
+    <span class="legend-count">${c.count}</span>`;
+  item.onclick = () => {
+    if (hiddenCommunities.has(c.cid)) {
+      hiddenCommunities.delete(c.cid);
+      item.classList.remove('dimmed');
+    } else {
+      hiddenCommunities.add(c.cid);
+      item.classList.add('dimmed');
+    }
+    const updates = RAW_NODES
+      .filter(n => n.community === c.cid)
+      .map(n => ({ id: n.id, hidden: hiddenCommunities.has(c.cid) }));
+    nodesDS.update(updates);
+  };
+  legendEl.appendChild(item);
+});
+</script>
+<script>
+function editProjectName() {
+    const current = document.getElementById('proj-name').innerText;
+    postToVSCode({ command: 'renameProject', currentName: current });
+}
+document.getElementById('granularity-toggle').addEventListener('change', (e) => {
+    updateGranularity(e.target.checked ? 'high' : 'low');
+});
+document.getElementById('heatmap-toggle').addEventListener('change', (e) => {
+    toggleHeatmap(e.target.checked);
+});
+document.getElementById('simulation-toggle').addEventListener('change', (e) => {
+    toggleSimulationMode(e.target.checked);
+});
+document.getElementById('full-detail-toggle').addEventListener('change', (e) => {
+    fullDetailMode = e.target.checked;
+    updateZoomLevels();
+});
+
+function toggleHeatmap(enabled) {
+  heatmapEnabled = enabled;
+  document.getElementById('heatmap-legend').style.display = enabled ? 'block' : 'none';
+  document.getElementById('legend-wrap').style.display = enabled ? 'none' : 'block';
+  
+  const updates = RAW_NODES.map(n => {
+    if (enabled) {
+      // Color based on heat (Green -> Yellow -> Red)
+      const h = n.heat || 0;
+      const r = Math.floor(255 * Math.min(1, h * 2));
+      const g = Math.floor(255 * Math.min(1, (1-h) * 2));
+      const color = `rgb(${r},${g},0)`;
+      return { 
+        id: n.id, 
+        color: { background: color, border: '#fff' }, 
+        size: 15 + (h * 40) 
+      };
+    } else {
+      return { id: n.id, color: n.color, size: n.size };
+    }
+  });
+  nodesDS.update(updates);
+}
+</script>
+<script>
+// Render hyperedges as shaded regions
+const hyperedges = [];
+// afterDrawing passes ctx already transformed to network coordinate space.
+// Draw node positions raw — no manual pan/zoom/DPR math needed.
+network.on('afterDrawing', function(ctx) {
+    hyperedges.forEach(h => {
+        const positions = h.nodes
+            .map(nid => network.getPositions([nid])[nid])
+            .filter(p => p !== undefined);
+        if (positions.length < 2) return;
+        ctx.save();
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = '#6366f1';
+        ctx.strokeStyle = '#6366f1';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // Centroid and expanded hull in network coordinates
+        const cx = positions.reduce((s, p) => s + p.x, 0) / positions.length;
+        const cy = positions.reduce((s, p) => s + p.y, 0) / positions.length;
+        const expanded = positions.map(p => ({
+            x: cx + (p.x - cx) * 1.15,
+            y: cy + (p.y - cy) * 1.15
+        }));
+        ctx.moveTo(expanded[0].x, expanded[0].y);
+        expanded.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 0.4;
+        ctx.stroke();
+        // Label
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = '#4f46e5';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(h.label, cx, cy - 5);
+        ctx.restore();
+    });
+});
+</script>
+<div id="schema-modal">
+  <div id="schema-modal-content">
+    <div id="schema-modal-header">
+      <h2 id="schema-title">Schema Details</h2>
+      <span class="close-modal" onclick="closeSchemaModal()">&times;</span>
+    </div>
+    <div id="schema-body"></div>
+  </div>
+</div>
+<script>
+window.onclick = function(event) {
+  const modal = document.getElementById('schema-modal');
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+</script>
+</body>
+</html>
