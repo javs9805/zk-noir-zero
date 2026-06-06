@@ -12,7 +12,7 @@ mod beacon_client;
 use bls_utils::{aggregate_g1, decompress_g2, hash_to_g2, g1_to_le_coords, g2_to_le_coords};
 use domain::{compute_domain, compute_signing_root};
 use beacon_client::{parse_fork_version, parse_g1_compressed, parse_g2_compressed,
-    parse_root};
+    parse_participation_bits, parse_root};
 
 fn bytes_to_toml_array(bytes: &[u8]) -> String {
     let vals: Vec<String> = bytes.iter().map(|b| b.to_string()).collect();
@@ -34,33 +34,66 @@ fn main() {
         .unwrap_or_else(|_| panic!("No se puede leer {data_path}"));
     let data: serde_json::Value = serde_json::from_str(&raw).expect("parse data.json");
 
-    // Parsear datos
-    let gvr = parse_root(data["genesis_validators_root"].as_str().unwrap()).unwrap();
-    let fork_version = parse_fork_version(data["fork_version"].as_str().unwrap()).unwrap();
-    let parent_root = parse_root(data["parent_root"].as_str().unwrap()).unwrap();
+    // 1. Extraer genesis_validators_root desde el objeto "genesis"
+    let gvr_str = data["genesis"]["genesisValidatorsRoot"].as_str()
+        .or_else(|| data["genesis_validators_root"].as_str()) // Por si acaso soporta ambos formatos
+        .expect("ERROR: No se encontró 'genesisValidatorsRoot' dentro del objeto 'genesis' en el JSON");
+    let gvr = parse_root(gvr_str).unwrap();
+
+    // 2. Extraer fork_version (revisa si en tu JSON está dentro de un objeto "fork")
+    let fork_version_str = data["fork"]["currentVersion"].as_str()
+        .or_else(|| data["fork_version"].as_str())
+        .expect("ERROR: No se encontró 'fork_version' o 'currentVersion' en el JSON");
+    let fork_version = parse_fork_version(fork_version_str).unwrap();
+
+    // 3. Extraer parent_root desde dentro de blockHeader
+    let parent_root_str = data["blockHeader"]["parent_root"].as_str()
+        .or_else(|| data["parent_root"].as_str())
+        .expect("ERROR: No se encontró 'parent_root' en el JSON");
+    let parent_root = parse_root(parent_root_str).unwrap();
 
     // Para reconstruir agg_pk y sig necesitamos las claves del data.json
     // data.json guarda signing_root directamente, y la firma + claves las parsea de nuevo
     // Alternativa: guardamos en data.json las coordenadas LE directamente
     // Por ahora data.json tiene signing_root precomputado y la firma comprimida
 
-    let sig_compressed = parse_g2_compressed(
-        data["sync_committee_signature"].as_str().unwrap()
-    ).unwrap();
+    // Buscar la firma en la raíz o dentro de blockHeader.sync_aggregate
+    let sig_str = data["sync_committee_signature"].as_str()
+        .or_else(|| data["blockHeader"]["sync_aggregate"]["sync_committee_signature"].as_str())
+        .expect("ERROR: No se encontró 'sync_committee_signature' en el JSON");
+
+    let sig_compressed = parse_g2_compressed(sig_str).unwrap();
     let sig = decompress_g2(&sig_compressed).expect("decompress G2 sig");
 
-    // Para agg_pk: data.json necesita tener las claves. Leer desde beacon si no están.
-    // En esta version simplificada recalculamos desde data.json extendido (si existe).
+// Determinar la clave pública agregada (agg_pk)
     let agg_pk: G1Affine = if let Some(agg_hex) = data.get("agg_pubkey_compressed").and_then(|v| v.as_str()) {
         let compressed = parse_g1_compressed(agg_hex).unwrap();
         G1Affine::from_compressed(&compressed).unwrap()
+    } else if let Some(keys_arr) = data["syncCommittee"]["pubkeys"].as_array() {
+        eprintln!("Calculando agg_pk dinámicamente desde syncCommittee.pubkeys ({} llaves)...", keys_arr.len());
+        
+        let mut keys_bytes: Vec<[u8; 48]> = Vec::new();
+        for (i, val) in keys_arr.iter().enumerate() {
+            if let Some(key_str) = val.as_str() {
+                let compressed = parse_g1_compressed(key_str)
+                    .unwrap_or_else(|_| panic!("Error al parsear hexadecimal de la pubkey en el índice {i}"));
+                keys_bytes.push(compressed);
+            }
+        }
+        
+        aggregate_g1(&keys_bytes).expect("Error al agregar las claves públicas de G1")
     } else if let Some(keys_arr) = data.get("participant_pubkeys").and_then(|v| v.as_array()) {
-        let compressed_keys: Vec<[u8; 48]> = keys_arr.iter().map(|k| {
-            parse_g1_compressed(k.as_str().unwrap()).unwrap()
-        }).collect();
-        aggregate_g1(&compressed_keys).expect("aggregate G1")
+        let mut keys_bytes: Vec<[u8; 48]> = Vec::new();
+        for (i, val) in keys_arr.iter().enumerate() {
+            if let Some(key_str) = val.as_str() {
+                let compressed = parse_g1_compressed(key_str)
+                    .unwrap_or_else(|_| panic!("Error al parsear hexadecimal en participant_pubkeys, índice {i}"));
+                keys_bytes.push(compressed);
+            }
+        }
+        aggregate_g1(&keys_bytes).expect("Error al agregar las claves de los participantes")
     } else {
-        panic!("data.json debe contener 'agg_pubkey_compressed' o 'participant_pubkeys'");
+        panic!("data.json debe contener 'syncCommittee.pubkeys', 'agg_pubkey_compressed' o 'participant_pubkeys'");
     };
 
     // RF-4: domain + signing_root
