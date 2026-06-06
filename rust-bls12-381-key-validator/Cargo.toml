@@ -1,0 +1,29 @@
+[package]
+name = "key_validator"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "generate-noir-inputs"
+path = "src/generate_noir_inputs.rs"
+
+[[bin]]
+name = "key-validator"
+path = "src/key-validator.rs"
+
+[[bin]]
+name = "get-api-status-request"
+path = "src/get-api-status-request.rs"
+
+[dependencies]
+sha2 = "0.10"
+hex = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", features = ["blocking", "json"] }
+toml = "0.8"
+bls12_381_plus = { version = "0.8", features = ["default"] }
+group = "0.13"
+subtle = "2"
+
+[dev-dependencies]
