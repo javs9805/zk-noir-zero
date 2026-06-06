@@ -438,7 +438,7 @@ fn test_fp_from_bytes_roundtrip() {
 // RF-6: to_bytes stub (RED)
 impl PrimeField {
     // Convierte a canonico, serializa 7 limbs de 56 bits en 48 bytes LE
-    fn to_bytes(self) -> [u8; 48] {
+    pub fn to_bytes(self) -> [u8; 48] {
         let canon = self.from_montgomery();
         let mut bytes: [u8; 48] = [0; 48];
         for i in 0..6 {
@@ -455,7 +455,7 @@ impl PrimeField {
     }
 
     // Convierte a bits LE (381 bits): usa to_bytes internamente
-    fn to_bits(self) -> [bool; 381] {
+    pub fn to_bits(self) -> [bool; 381] {
         let bytes = self.to_bytes();
         let mut bits: [bool; 381] = [false; 381];
         for i in 0..47 {

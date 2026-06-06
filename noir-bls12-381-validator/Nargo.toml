@@ -1,0 +1,9 @@
+[package]
+name = "noir_bls12_381_validator"
+type = "bin"
+authors = []
+compiler_version = ">=1.0.0"
+
+[dependencies]
+noir_bls_signature = { path = "../noir-bls-signature" }
+noir_bigint_bls12_381 = { path = "../noir-bigint-bls12_381" }

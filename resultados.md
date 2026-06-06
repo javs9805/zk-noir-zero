@@ -195,3 +195,49 @@
 (*) Tests de pairing corriendo — tiempo alto esperado por complejidad del circuito.
 
 **Total noir-bls-signature: 42/42 tests (pendiente confirmacion).**
+
+---
+
+## Proyecto 3: noir-bls12-381-validator
+
+### RF-7 — verify_bls_signature (noir-bls-signature)
+- Implementado en `signature.nr`: `verify_bls_signature(sig, pk, msg)` via `pair`.
+- Tests GREEN: 2/2. test_verify_bls_signature_valid (sk=1), test_verify_bls_signature_invalid (should_fail).
+
+### RF-10 — sha256_64 (noir-bls12-381-validator)
+- Creado `noir-bls12-381-validator/` con `Nargo.toml` y `src/main.nr`.
+- Implementacion SHA-256 manual en Noir: `rotr`, `sha256_compress`, `sha256_64`.
+- Problema: overflow u32 en sumas. Solucion: todas las sumas via cast a u64 y mascara 0xFFFFFFFF.
+- Problema: non-ASCII en comentarios. Solucion: ASCII puro.
+- Test GREEN: test_sha256_64_zero_vector (SHA256([0;64])[0] == 0xf5). Verde.
+
+### RF-6 — compute_domain
+- `compute_domain(fork_version, genesis_validators_root)`:
+  preimage = fork_version (padded 32 bytes) || genesis_validators_root
+  domain = 0x07000000 || sha256_64(preimage)[0..28]
+- Test GREEN: test_compute_domain_known_vector (domain[0]==0x07, domain[4]==0xf5). Verde.
+
+### RF-7 — compute_signing_root
+- `compute_signing_root(parent_root, domain)` = sha256_64(parent_root || domain).
+- Test GREEN: test_compute_signing_root_zero_vector (sr[0]==0xf5). Verde.
+
+### RF-8 — main stub / assert signing_root
+- Test RED activo: test_main_correct_signing_root (main con assert(false) en stub falla — RED confirmado).
+- Pendiente GREEN: reemplazar stub de main con logica real.
+
+---
+
+## Estado actual
+
+| Proyecto | RF | Descripcion | Estado |
+|----------|----|-------------|--------|
+| noir-bigint-bls12_381 | RF-1..RF-8 | BigUint56 + PrimeField completo | VERDE 19/19 |
+| noir-bls-signature | RF-1..RF-9 | G1, G2, Fp2/6/12, pairing, verify | VERDE 44/44 |
+| noir-bls12-381-validator | RF-10 | sha256_64 | VERDE |
+| noir-bls12-381-validator | RF-6 | compute_domain | VERDE |
+| noir-bls12-381-validator | RF-7 | compute_signing_root | VERDE |
+| noir-bls12-381-validator | RF-8 | assert signing_root en main | RED activo |
+| noir-bls12-381-validator | RF-3..RF-5 | reconstruir G1/G2 desde bytes en main | PENDIENTE |
+| noir-bls12-381-validator | RF-4..RF-5 | assert pk != 0, sig != 0 en main | PENDIENTE |
+| noir-bls12-381-validator | RF-9 | verify BLS pairing en main | PENDIENTE |
+| rust-bls12-381-key-validator | - | Proyecto 4 | PENDIENTE |
