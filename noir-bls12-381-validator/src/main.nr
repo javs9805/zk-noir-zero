@@ -151,13 +151,8 @@ fn main(
     assert(!pk.is_zero());
     assert(!sig.is_zero());
 
-    // RF-9: verify BLS signature e(sig, G1_gen) * e(neg(msg), pk) == Fp12::one()
-    let g1_gen = ::noir_bls_signature::bls12_381::swcurve::G1Point::generator();
-    let neg_msg = msg.neg();
-    let result = ::noir_bls_signature::bls12_381::pairing::pair_multi(
-        sig, g1_gen, neg_msg, pk
-    );
-    assert(result.eq(::noir_bls_signature::bls12_381::fp12::Fp12::one()));
+    // RF-9: verify BLS signature via verify_bls_signature
+    ::noir_bls_signature::bls12_381::signature::verify_bls_signature(sig, pk, msg);
 
     // RF-6: compute domain
     let domain = compute_domain(fork_version, genesis_validators_root);
