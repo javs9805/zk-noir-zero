@@ -29,7 +29,7 @@ echo "========================================================="
 # Evaluamos la variable $CMD_TO_RUN de forma segura.
 # Captura tanto stdout como stderr (2>&1) y lo duplica a la pantalla y al log.
 
-/usr/bin/time "$CMD_TO_RUN" 2>&1 | tee "$LOG_FILE"
+/usr/bin/time -v eval "$CMD_TO_RUN" 2>&1 | tee "$LOG_FILE"
 EXIT_CODE=${PIPESTATUS[0]} # Captura el exit code real del comando ejecutado, no el de tee
 
 # 3. Calcular espacio en disco actual del proyecto
