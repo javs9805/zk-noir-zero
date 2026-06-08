@@ -1,66 +1,66 @@
-use ::noir_bigint_bls12_381::prime_field::PrimeField;
+use ::bignum::BigNum;
+use ::bignum::BLS12_381_Fq;
+
+// BLS12-381 base field Fq via noir-bignum v0.10.0 pre-defined concrete struct.
+// Inverse uses an unconstrained oracle + 1 constrained multiplication (~15K gates)
+// vs the previous Fermat exp(p-2) approach (~19M gates per inverse).
+pub type BLS12_381Fq = BLS12_381_Fq;
+
+// Convert 48 little-endian bytes (as used in our constants) to a field element.
+pub fn fp_from_le(bytes: [u8; 48]) -> BLS12_381Fq {
+    BLS12_381_Fq::from_le_bytes(bytes)
+}
 
 // Fp2 = Fp[u] / (u^2 + 1)
-// elemento: c0 + c1*u, con c0,c1 en Montgomery form
+// element: c0 + c1*u
 pub struct Fp2 {
-    pub c0: PrimeField,
-    pub c1: PrimeField,
+    pub c0: BLS12_381Fq,
+    pub c1: BLS12_381Fq,
 }
 
 impl Fp2 {
     pub fn zero() -> Self {
-        Fp2 { c0: PrimeField { limbs: [0;7] }, c1: PrimeField { limbs: [0;7] } }
+        Fp2 { c0: BLS12_381_Fq::zero(), c1: BLS12_381_Fq::zero() }
     }
 
     pub fn one() -> Self {
-        Fp2 {
-            c0: PrimeField { limbs: [1, 0, 0, 0, 0, 0, 0] }.to_montgomery(),
-            c1: PrimeField { limbs: [0;7] },
-        }
+        Fp2 { c0: BLS12_381_Fq::one(), c1: BLS12_381_Fq::zero() }
     }
 
     pub fn is_zero(self) -> bool {
-        let z: [Field; 7] = [0;7];
-        let c0z = (self.c0.limbs[0] == z[0]) & (self.c0.limbs[1] == z[1]) &
-                  (self.c0.limbs[2] == z[2]) & (self.c0.limbs[3] == z[3]) &
-                  (self.c0.limbs[4] == z[4]) & (self.c0.limbs[5] == z[5]) &
-                  (self.c0.limbs[6] == z[6]);
-        let c1z = (self.c1.limbs[0] == z[0]) & (self.c1.limbs[1] == z[1]) &
-                  (self.c1.limbs[2] == z[2]) & (self.c1.limbs[3] == z[3]) &
-                  (self.c1.limbs[4] == z[4]) & (self.c1.limbs[5] == z[5]) &
-                  (self.c1.limbs[6] == z[6]);
-        c0z & c1z
+        let zero: BLS12_381Fq = BLS12_381_Fq::zero();
+        (self.c0 == zero) & (self.c1 == zero)
     }
 
     pub fn eq(self, other: Self) -> bool {
-        self.c0.eq(other.c0) & self.c1.eq(other.c1)
+        (self.c0 == other.c0) & (self.c1 == other.c1)
     }
 
     pub fn add(self, other: Self) -> Self {
-        Fp2 { c0: self.c0.add(other.c0), c1: self.c1.add(other.c1) }
+        Fp2 { c0: self.c0 + other.c0, c1: self.c1 + other.c1 }
     }
 
     pub fn neg(self) -> Self {
-        Fp2 { c0: self.c0.neg(), c1: self.c1.neg() }
+        Fp2 { c0: -self.c0, c1: -self.c1 }
     }
 
     // (a+bu)(c+du) = (ac - bd) + (ad+bc)u   [u^2 = -1]
     // Karatsuba: t0=a*c, t1=b*d, c0=t0-t1, c1=(a+b)*(c+d)-t0-t1
     pub fn mul(self, other: Self) -> Self {
-        let t0 = self.c0.mul(other.c0);
-        let t1 = self.c1.mul(other.c1);
-        let c0 = t0.add(t1.neg());
-        let ab = self.c0.add(self.c1);
-        let cd = other.c0.add(other.c1);
-        let c1 = ab.mul(cd).add(t0.neg()).add(t1.neg());
+        let t0 = self.c0 * other.c0;
+        let t1 = self.c1 * other.c1;
+        let c0 = t0 - t1;
+        let c1 = (self.c0 + self.c1) * (other.c0 + other.c1) - t0 - t1;
         Fp2 { c0, c1 }
     }
 
     // inv(a+bu) = (a - bu) / (a^2 + b^2)
+    // Uses bignum constrained division: 1 oracle hint + 1 constrained mul per inverse.
     pub fn inv(self) -> Self {
-        let norm = self.c0.mul(self.c0).add(self.c1.mul(self.c1));
-        let inv_norm = norm.inv();
-        Fp2 { c0: self.c0.mul(inv_norm), c1: self.c1.neg().mul(inv_norm) }
+        let norm = self.c0 * self.c0 + self.c1 * self.c1;
+        let one: BLS12_381Fq = BLS12_381_Fq::one();
+        let inv_norm = one / norm;
+        Fp2 { c0: self.c0 * inv_norm, c1: (-self.c1) * inv_norm }
     }
 }
 
@@ -110,8 +110,8 @@ fn test_fp2_mul_one_identity() {
 fn test_fp2_mul_u_squared_is_neg_one() {
     println(">> test_fp2_mul_u_squared_is_neg_one");
     let u = Fp2 {
-        c0: PrimeField { limbs: [0; 7] },
-        c1: PrimeField { limbs: [1, 0, 0, 0, 0, 0, 0] }.to_montgomery(),
+        c0: BLS12_381_Fq::zero(),
+        c1: BLS12_381_Fq::one(),
     };
     let u2 = u.mul(u);
     let neg_one = Fp2::one().neg();

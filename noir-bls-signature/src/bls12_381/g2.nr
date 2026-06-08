@@ -1,7 +1,7 @@
-use ::noir_bigint_bls12_381::prime_field::PrimeField;
-use crate::bls12_381::fp2::Fp2;
+use ::bignum::BigNum;
+use crate::bls12_381::fp2::{BLS12_381Fq, Fp2, fp_from_le};
 
-// RF-8: G2 generator x.c0 (BE->LE 48 bytes)
+// RF-8: G2 generator coordinates in little-endian 48 bytes
 global G2_GEN_X_C0: [u8; 48] = [
     0xb8, 0xbd, 0x21, 0xc1, 0xc8, 0x56, 0x80, 0xd4,
     0xef, 0xbb, 0x05, 0xa8, 0x26, 0x03, 0xac, 0x0b,
@@ -38,7 +38,7 @@ global G2_GEN_Y_C1: [u8; 48] = [
     0xcc, 0x34, 0xa7, 0x2e, 0xa0, 0xc4, 0x06, 0x06
 ];
 
-// RF-2: punto en G2 (Short Weierstrass sobre Fp2): y^2 = x^3 + 4(1+u)
+// RF-2: G2 point (Short Weierstrass over Fp2): y^2 = x^3 + 4(1+u)
 pub struct G2Point {
     pub x: Fp2,
     pub y: Fp2,
@@ -53,12 +53,12 @@ impl G2Point {
     pub fn generator() -> Self {
         G2Point {
             x: Fp2 {
-                c0: PrimeField::from_bytes(G2_GEN_X_C0),
-                c1: PrimeField::from_bytes(G2_GEN_X_C1),
+                c0: fp_from_le(G2_GEN_X_C0),
+                c1: fp_from_le(G2_GEN_X_C1),
             },
             y: Fp2 {
-                c0: PrimeField::from_bytes(G2_GEN_Y_C0),
-                c1: PrimeField::from_bytes(G2_GEN_Y_C1),
+                c0: fp_from_le(G2_GEN_Y_C0),
+                c1: fp_from_le(G2_GEN_Y_C1),
             },
             infinity: false,
         }
@@ -102,12 +102,12 @@ impl G2Point {
             self
         } else {
             let three = Fp2 {
-                c0: PrimeField { limbs: [3, 0, 0, 0, 0, 0, 0] }.to_montgomery(),
-                c1: PrimeField { limbs: [0; 7] },
+                c0: BLS12_381Fq::from_limbs([3, 0, 0, 0]),
+                c1: BLS12_381Fq::zero(),
             };
             let two = Fp2 {
-                c0: PrimeField { limbs: [2, 0, 0, 0, 0, 0, 0] }.to_montgomery(),
-                c1: PrimeField { limbs: [0; 7] },
+                c0: BLS12_381Fq::from_limbs([2, 0, 0, 0]),
+                c1: BLS12_381Fq::zero(),
             };
             let x2 = self.x.mul(self.x);
             let lambda = three.mul(x2).mul(two.mul(self.y).inv());
@@ -138,8 +138,8 @@ fn test_g2_generator_is_not_zero() {
 fn test_g2_generator_x_c0_nonzero() {
     println(">> test_g2_generator_x_c0_nonzero");
     let g = G2Point::generator();
-    let xc0 = g.x.c0.from_montgomery();
-    assert(xc0.limbs[0] != 0);
+    let zero: BLS12_381Fq = BLS12_381Fq::zero();
+    assert(!(g.x.c0 == zero));
 }
 
 #[test]

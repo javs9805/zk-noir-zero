@@ -1,6 +1,7 @@
-use ::noir_bigint_bls12_381::prime_field::PrimeField;
+use ::bignum::BigNum;
+use crate::bls12_381::fp2::{BLS12_381Fq, fp_from_le};
 
-// RF-8: coordenada X del generador G1 de BLS12-381 en little-endian 48 bytes
+// RF-8: G1 generator X in little-endian 48 bytes
 // Gx = 0x17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb
 global G1_GEN_X: [u8; 48] = [
     0xbb, 0xc6, 0x22, 0xdb, 0x0a, 0xf0, 0x3a, 0xfb,
@@ -11,7 +12,7 @@ global G1_GEN_X: [u8; 48] = [
     0x94, 0xd7, 0x97, 0x31, 0xa7, 0xd3, 0xf1, 0x17
 ];
 
-// RF-8: coordenada Y del generador G1 de BLS12-381 en little-endian 48 bytes
+// RF-8: G1 generator Y in little-endian 48 bytes
 // Gy = 0x08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1
 global G1_GEN_Y: [u8; 48] = [
     0xe1, 0xe7, 0xc5, 0x46, 0x29, 0x23, 0xaa, 0x0c,
@@ -22,22 +23,22 @@ global G1_GEN_Y: [u8; 48] = [
     0xf1, 0xa0, 0xaa, 0xe3, 0x81, 0xf4, 0xb3, 0x08
 ];
 
-// RF-1: punto en G1 (Short Weierstrass sobre Fp): y^2 = x^3 + 4
+// RF-1: G1 point (Short Weierstrass over Fq): y^2 = x^3 + 4
 pub struct G1Point {
-    pub x: PrimeField,
-    pub y: PrimeField,
+    pub x: BLS12_381Fq,
+    pub y: BLS12_381Fq,
     pub infinity: bool,
 }
 
 impl G1Point {
     pub fn zero() -> Self {
-        G1Point { x: PrimeField { limbs: [0; 7] }, y: PrimeField { limbs: [0; 7] }, infinity: true }
+        G1Point { x: BLS12_381Fq::zero(), y: BLS12_381Fq::zero(), infinity: true }
     }
 
     pub fn generator() -> Self {
         G1Point {
-            x: PrimeField::from_bytes(G1_GEN_X),
-            y: PrimeField::from_bytes(G1_GEN_Y),
+            x: fp_from_le(G1_GEN_X),
+            y: fp_from_le(G1_GEN_Y),
             infinity: false,
         }
     }
@@ -50,19 +51,19 @@ impl G1Point {
         if self.infinity {
             self
         } else {
-            G1Point { x: self.x, y: self.y.neg(), infinity: false }
+            G1Point { x: self.x, y: -self.y, infinity: false }
         }
     }
 
-    // Suma affine completa (Short Weierstrass)
+    // Affine addition (Short Weierstrass complete formula)
     pub fn add(self, other: Self) -> Self {
         if self.infinity {
             other
         } else if other.infinity {
             self
         } else {
-            let same_x = self.x.eq(other.x);
-            let same_y = self.y.eq(other.y);
+            let same_x = self.x == other.x;
+            let same_y = self.y == other.y;
             if same_x {
                 if same_y {
                     self.double()
@@ -70,29 +71,25 @@ impl G1Point {
                     G1Point::zero()
                 }
             } else {
-                let dy = other.y.add(self.y.neg());
-                let dx = other.x.add(self.x.neg());
-                let lambda = dy.mul(dx.inv());
-                let x3 = lambda.mul(lambda).add(self.x.neg()).add(other.x.neg());
-                let y3 = lambda.mul(self.x.add(x3.neg())).add(self.y.neg());
+                // lambda = (y2 - y1) / (x2 - x1)
+                let lambda = (other.y - self.y) / (other.x - self.x);
+                let x3 = lambda * lambda - self.x - other.x;
+                let y3 = lambda * (self.x - x3) - self.y;
                 G1Point { x: x3, y: y3, infinity: false }
             }
         }
     }
 
-    // Duplicacion: 2*P via formula lambda = 3x^2 / 2y
+    // Point doubling: lambda = 3x^2 / 2y
     pub fn double(self) -> Self {
         if self.infinity {
             self
         } else {
-            let three  = PrimeField { limbs: [3, 0, 0, 0, 0, 0, 0] }.to_montgomery();
-            let two    = PrimeField { limbs: [2, 0, 0, 0, 0, 0, 0] }.to_montgomery();
-            let x2     = self.x.mul(self.x);
-            let num    = three.mul(x2);
-            let den    = two.mul(self.y);
-            let lambda = num.mul(den.inv());
-            let x3 = lambda.mul(lambda).add(self.x.neg()).add(self.x.neg());
-            let y3 = lambda.mul(self.x.add(x3.neg())).add(self.y.neg());
+            let three: BLS12_381Fq = BLS12_381Fq::from_limbs([3, 0, 0, 0]);
+            let two: BLS12_381Fq   = BLS12_381Fq::from_limbs([2, 0, 0, 0]);
+            let lambda = (three * self.x * self.x) / (two * self.y);
+            let x3 = lambda * lambda - self.x - self.x;
+            let y3 = lambda * (self.x - x3) - self.y;
             G1Point { x: x3, y: y3, infinity: false }
         }
     }
@@ -118,8 +115,8 @@ fn test_g1_generator_is_not_zero() {
 fn test_g1_generator_x_first_limb() {
     println(">> test_g1_generator_x_first_limb");
     let g = G1Point::generator();
-    let xc = g.x.from_montgomery();
-    assert(xc.limbs[0] != 0);
+    let zero: BLS12_381Fq = BLS12_381Fq::zero();
+    assert(!(g.x == zero));
 }
 
 #[test]

@@ -1,17 +1,17 @@
-use ::noir_bigint_bls12_381::prime_field::PrimeField;
-use crate::bls12_381::fp2::Fp2;
+use ::bignum::BigNum;
+use crate::bls12_381::fp2::{BLS12_381Fq, Fp2};
 
 // Fp6 = Fp2[v] / (v^3 - xi), xi = 1+u
-// elemento: c0 + c1*v + c2*v^2
+// element: c0 + c1*v + c2*v^2
 pub struct Fp6 {
     pub c0: Fp2,
     pub c1: Fp2,
     pub c2: Fp2,
 }
 
-// mul por xi = 1+u: xi*(c0+c1*u) = (c0-c1) + (c0+c1)*u
+// mul by xi = 1+u: xi*(c0+c1*u) = (c0-c1) + (c0+c1)*u
 pub fn mul_by_xi(a: Fp2) -> Fp2 {
-    Fp2 { c0: a.c0.add(a.c1.neg()), c1: a.c0.add(a.c1) }
+    Fp2 { c0: a.c0 - a.c1, c1: a.c0 + a.c1 }
 }
 
 impl Fp6 {
@@ -64,7 +64,7 @@ impl Fp6 {
     //   d0 = a0^2 - xi*a2*a1
     //   d1 = xi*a2^2 - a0*a1
     //   d2 = a1^2 - a0*a2
-    //   t  = (a0*d0 + xi*(a2*d1 + a1*d2))^{-1} en Fp2
+    //   t  = (a0*d0 + xi*(a2*d1 + a1*d2))^{-1} in Fp2
     //   inv = (d0*t, d1*t, d2*t)
     pub fn inv(self) -> Self {
         let d0 = self.c0.mul(self.c0).add(mul_by_xi(self.c2.mul(self.c1)).neg());
@@ -122,7 +122,7 @@ fn test_fp6_mul_one_identity() {
 #[test]
 fn test_fp6_mul_v_cubed_is_xi() {
     println(">> test_fp6_mul_v_cubed_is_xi");
-    let one_fp = PrimeField { limbs: [1, 0, 0, 0, 0, 0, 0] }.to_montgomery();
+    let one_fp: BLS12_381Fq = BLS12_381Fq::one();
     let xi = Fp2 { c0: one_fp, c1: one_fp };
     let v = Fp6 { c0: Fp2::zero(), c1: Fp2::one(), c2: Fp2::zero() };
     let v3 = v.mul(v).mul(v);
