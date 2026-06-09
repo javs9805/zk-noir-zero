@@ -218,15 +218,17 @@ fn cyclotomic_square(f: Fp12) -> Fp12 {
 }
 
 // Exponentiation by x = 0xd201000000010000 (BLS_X, negative - conjugate at end)
+// x = 2^63+2^62+2^60+2^57+2^48+2^16; skip leading bit 63; bits[i] = bit(62-i)
+// set bits: i=0(bit62), i=2(bit60), i=5(bit57), i=14(bit48), i=46(bit16)
 fn cyclotomic_exp(f: Fp12) -> Fp12 {
     let bits: [bool; 63] = [
         true, false, true, false, false, true, false, false,
-        false, false, false, false, false, false, false, true,
+        false, false, false, false, false, false, true, false,
         false, false, false, false, false, false, false, false,
         false, false, false, false, false, false, false, false,
         false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, true, false,
         false, false, false, false, false, false, false, false,
-        true, false, false, false, false, false, false, false,
         false, false, false, false, false, false, false
     ];
     let mut result = Fp12::one();
@@ -356,14 +358,17 @@ pub fn miller_loop(q: G2Point, p: G1Point) -> Fp12 {
         Fp12::one()
     } else {
 
+    // x = 0xd201000000010000 = 2^63+2^62+2^60+2^57+2^48+2^16
+    // skip leading bit 63; bits[i] = bit(62-i)
+    // set bits: i=0(bit62), i=2(bit60), i=5(bit57), i=14(bit48), i=46(bit16)
     let bits: [bool; 63] = [
         true, false, true, false, false, true, false, false,
-        false, false, false, false, false, false, false, true,
+        false, false, false, false, false, false, true, false,
         false, false, false, false, false, false, false, false,
         false, false, false, false, false, false, false, false,
         false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, true, false,
         false, false, false, false, false, false, false, false,
-        true, false, false, false, false, false, false, false,
         false, false, false, false, false, false, false
     ];
 
