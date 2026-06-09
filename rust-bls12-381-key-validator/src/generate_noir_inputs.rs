@@ -108,7 +108,7 @@ fn main() {
     let (sig_x_c0, sig_x_c1, sig_y_c0, sig_y_c1) = g2_to_le_coords(&sig);
     let (msg_x_c0, msg_x_c1, msg_y_c0, msg_y_c1) = g2_to_le_coords(&msg);
 
-    // RF-7: Prover.toml
+    // RF-7: Prover.toml (public inputs like expected_signing_root must also be here)
     let prover_content = format!(
         "pubkey_x = {}\n\
          pubkey_y = {}\n\
@@ -122,7 +122,8 @@ fn main() {
          msg_y_c1 = {}\n\
          genesis_validators_root = {}\n\
          fork_version = {}\n\
-         parent_root = {}\n",
+         parent_root = {}\n\
+         expected_signing_root = {}\n",
         bytes_to_toml_array(&pk_x),
         bytes_to_toml_array(&pk_y),
         bytes_to_toml_array(&sig_x_c0),
@@ -136,6 +137,7 @@ fn main() {
         bytes_to_toml_array(&gvr),
         bytes_to_toml_array(&fork_version),
         bytes_to_toml_array(&parent_root),
+        bytes_to_toml_array(&signing_root),
     );
 
     std::fs::write(&prover_path, &prover_content)
