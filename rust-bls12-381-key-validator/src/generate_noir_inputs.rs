@@ -66,21 +66,31 @@ fn main() {
     let sig = decompress_g2(&sig_compressed).expect("decompress G2 sig");
 
 // Determinar la clave pública agregada (agg_pk)
+    // IMPORTANTE: solo agregar las claves de validadores que participaron (bit=1),
+    // igual que key-validator. Usar todas las claves produce una clave incorrecta.
     let agg_pk: G1Affine = if let Some(agg_hex) = data.get("agg_pubkey_compressed").and_then(|v| v.as_str()) {
         let compressed = parse_g1_compressed(agg_hex).unwrap();
         G1Affine::from_compressed(&compressed).unwrap()
     } else if let Some(keys_arr) = data["syncCommittee"]["pubkeys"].as_array() {
-        eprintln!("Calculando agg_pk dinámicamente desde syncCommittee.pubkeys ({} llaves)...", keys_arr.len());
-        
+        // Leer bits de participación para agregar solo los validadores que firmaron
+        let bits: Vec<u8> = data["participation"]["bitsArray"]
+            .as_array()
+            .map(|arr| arr.iter().map(|v| v.as_u64().unwrap_or(0) as u8).collect())
+            .unwrap_or_default();
+
         let mut keys_bytes: Vec<[u8; 48]> = Vec::new();
         for (i, val) in keys_arr.iter().enumerate() {
-            if let Some(key_str) = val.as_str() {
-                let compressed = parse_g1_compressed(key_str)
-                    .unwrap_or_else(|_| panic!("Error al parsear hexadecimal de la pubkey en el índice {i}"));
-                keys_bytes.push(compressed);
+            let participó = bits.get(i).copied().unwrap_or(1) == 1;
+            if participó {
+                if let Some(key_str) = val.as_str() {
+                    let compressed = parse_g1_compressed(key_str)
+                        .unwrap_or_else(|_| panic!("Error al parsear hexadecimal de la pubkey en el índice {i}"));
+                    keys_bytes.push(compressed);
+                }
             }
         }
-        
+
+        eprintln!("Agregando {} claves participantes de {} totales...", keys_bytes.len(), keys_arr.len());
         aggregate_g1(&keys_bytes).expect("Error al agregar las claves públicas de G1")
     } else if let Some(keys_arr) = data.get("participant_pubkeys").and_then(|v| v.as_array()) {
         let mut keys_bytes: Vec<[u8; 48]> = Vec::new();
