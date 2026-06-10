@@ -283,10 +283,11 @@ pub fn final_exp(f: Fp12) -> Fp12 {
     final_exp_hard(f_easy)
 }
 
-// ---- Sparse Fp12 multiply by line eval (mul_by_014) ----
+// Sparse Fp12 multiply by line eval - "mul_by_034" form for BLS12-381 D-twist.
+// l(P) = -Py + lam*Px*w + (Ty-lam*Tx)*v*w  =>  non-zero at {c0.c0=0, c1.c0=3, c1.c1=4}
 fn fp12_mul_line(f: Fp12, lc0: Fp2, lc1: Fp2, lc2: Fp2) -> Fp12 {
-    let g_c0 = Fp6 { c0: lc0, c1: lc2, c2: Fp2::zero() };
-    let g_c1 = Fp6 { c0: lc1, c1: Fp2::zero(), c2: Fp2::zero() };
+    let g_c0 = Fp6 { c0: lc0, c1: Fp2::zero(), c2: Fp2::zero() };
+    let g_c1 = Fp6 { c0: lc1, c1: lc2, c2: Fp2::zero() };
     let g = Fp12 { c0: g_c0, c1: g_c1 };
     f.mul(g)
 }
