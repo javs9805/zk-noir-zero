@@ -218,7 +218,8 @@ fn cyclotomic_square(f: Fp12) -> Fp12 {
 }
 
 // Exponentiation by x = 0xd201000000010000 (BLS_X, negative - conjugate at end)
-// x = 2^63+2^62+2^60+2^57+2^48+2^16; skip leading bit 63; bits[i] = bit(62-i)
+// x = 2^63+2^62+2^60+2^57+2^48+2^16
+// bits[i] = bit(62-i) (63 entries, bit 63 handled by result=f init, same as T=Q in miller_loop)
 // set bits: i=0(bit62), i=2(bit60), i=5(bit57), i=14(bit48), i=46(bit16)
 fn cyclotomic_exp(f: Fp12) -> Fp12 {
     let bits: [bool; 63] = [
@@ -231,16 +232,10 @@ fn cyclotomic_exp(f: Fp12) -> Fp12 {
         false, false, false, false, false, false, false, false,
         false, false, false, false, false, false, false
     ];
-    let mut result = Fp12::one();
-    let mut found_one = false;
+    let mut result = f;  // bit 63 = 1, same pattern as T=Q init in miller_loop
     for i in 0..63 {
-        let bit = bits[i];
-        if found_one {
-            result = cyclotomic_square(result);
-        } else {
-            found_one = bit;
-        }
-        if bit {
+        result = cyclotomic_square(result);
+        if bits[i] {
             result = result.mul(f);
         }
     }
