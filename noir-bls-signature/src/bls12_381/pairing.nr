@@ -205,11 +205,13 @@ fn cyclotomic_square(f: Fp12) -> Fp12 {
     let b4 = t1b.add(z5);
     let z5_final = b4.add(b4).add(t1b);
 
-    let t0_nr = Fp2 { c0: t3b.c0 - t3b.c1, c1: t3b.c0 + t3b.c1 };
+    // t2b = first output of fp4_square(z4,z5), t3b = second output
+    // new_z2 uses xi*t2b (first), new_z3 uses t3b (second) — NOT swapped
+    let t0_nr = Fp2 { c0: t2b.c0 - t2b.c1, c1: t2b.c0 + t2b.c1 };
     let a2 = t0_nr.add(z2);
     let z2_final = a2.add(a2).add(t0_nr);
-    let a3 = t2b.add(z3.neg());
-    let z3_final = a3.add(a3).add(t2b);
+    let a3 = t3b.add(z3.neg());
+    let z3_final = a3.add(a3).add(t3b);
 
     Fp12 {
         c0: Fp6 { c0: z0_final, c1: z4_final, c2: z3_final },
