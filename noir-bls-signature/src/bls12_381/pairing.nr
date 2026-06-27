@@ -172,51 +172,15 @@ fn fp12_frobenius3(f: Fp12) -> Fp12 {
 }
 
 
-// ---- Cyclotomic square (Alg 5.5.4) ----
-fn fp4_square(a: Fp2, b: Fp2) -> (Fp2, Fp2) {
-    let t0 = a.mul(a);
-    let t1 = b.mul(b);
-    let t2 = Fp2 { c0: t1.c0 - t1.c1, c1: t1.c0 + t1.c1 };
-    let c0 = t2.add(t0);
-    let t2 = a.add(b).mul(a.add(b));
-    let c1 = t2.add(t0.neg()).add(t1.neg());
-    (c0, c1)
-}
-
+// ---- Cyclotomic square ----
+// For f = c0 + c1*w in Fp12 = Fp6[w]/(w^2-v), unitary condition gives c0^2 - c1^2*v = 1.
+// Therefore f^2 = (c0^2 + c1^2*v) + 2*c0*c1*w = (2*c0^2 - 1) + 2*c0*c1*w.
 fn cyclotomic_square(f: Fp12) -> Fp12 {
-    let z0 = f.c0.c0;
-    let z4 = f.c0.c1;
-    let z3 = f.c0.c2;
-    let z2 = f.c1.c0;
-    let z1 = f.c1.c1;
-    let z5 = f.c1.c2;
-
-    let (t0, t1) = fp4_square(z0, z1);
-    let a0 = t0.add(z0.neg());
-    let z0_final = a0.add(a0).add(t0);
-    let b0 = t1.add(z1);
-    let z1_final = b0.add(b0).add(t1);
-
-    let (t0b, t1b) = fp4_square(z2, z3);
-    let (t2b, t3b) = fp4_square(z4, z5);
-
-    let a4 = t0b.add(z4.neg());
-    let z4_final = a4.add(a4).add(t0b);
-    let b4 = t1b.add(z5);
-    let z5_final = b4.add(b4).add(t1b);
-
-    // t2b = first output of fp4_square(z4,z5), t3b = second output
-    // new_z2 uses xi*t2b (first), new_z3 uses t3b (second) — NOT swapped
-    let t0_nr = Fp2 { c0: t2b.c0 - t2b.c1, c1: t2b.c0 + t2b.c1 };
-    let a2 = t0_nr.add(z2);
-    let z2_final = a2.add(a2).add(t0_nr);
-    let a3 = t3b.add(z3.neg());
-    let z3_final = a3.add(a3).add(t3b);
-
-    Fp12 {
-        c0: Fp6 { c0: z0_final, c1: z4_final, c2: z3_final },
-        c1: Fp6 { c0: z2_final, c1: z1_final, c2: z5_final },
-    }
+    let c0_sq = f.c0.mul(f.c0);
+    let new_c0 = c0_sq.add(c0_sq).add(Fp6::one().neg());  // 2*c0^2 - 1
+    let c0c1   = f.c0.mul(f.c1);
+    let new_c1 = c0c1.add(c0c1);                            // 2*c0*c1
+    Fp12 { c0: new_c0, c1: new_c1 }
 }
 
 // Exponentiation by x = 0xd201000000010000 (BLS_X, negative - conjugate at end)
