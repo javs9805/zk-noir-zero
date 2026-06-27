@@ -113,6 +113,10 @@ fn main() {
     // RF-5: H(signing_root) via hash-to-curve
     let msg: G2Affine = hash_to_g2(&signing_root);
 
+    // Guardia: los mismos valores que van al circuito deben verificar en Rust
+    assert!(bls_utils::verify_bls(sig, agg_pk, msg), "BLS verify failed — el Prover.toml seria invalido");
+    eprintln!("[ok] BLS signature verified — Prover.toml sera valido");
+
     // Extraer coordenadas LE
     let (pk_x, pk_y) = g1_to_le_coords(&agg_pk);
     let (sig_x_c0, sig_x_c1, sig_y_c0, sig_y_c1) = g2_to_le_coords(&sig);
